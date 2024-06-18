@@ -6,10 +6,9 @@ import com.examen.ms_roque_sucari.response.ResponseBase;
 import com.examen.ms_roque_sucari.service.EmpresaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/v1/api/empresa")
@@ -27,5 +26,21 @@ public class EmpresaController {
         }else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBase);
         }
+    }
+
+    @GetMapping("/{numeroDocumento}")
+    public ResponseEntity<ResponseBase> getEmpresa(@PathVariable String numeroDocumento){
+        ResponseBase responseBase = empresaService.getEmpresa(numeroDocumento);
+        if(responseBase.getCode() == Constants.CODIGO_EXITO){
+            return ResponseEntity.ok(responseBase);
+        }else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBase);
+        }
+    }
+
+    @DeleteMapping("/{numeroDocumento}")
+    public ResponseEntity<ResponseBase> deleteEmpresa(@PathVariable String numeroDocumento){
+        empresaService.deleteEmpresa(numeroDocumento);
+        return ResponseEntity.ok(new ResponseBase(Constants.CODIGO_EXITO,Constants.MENSAJE_EXITO_DELETE, Optional.empty()));
     }
 }

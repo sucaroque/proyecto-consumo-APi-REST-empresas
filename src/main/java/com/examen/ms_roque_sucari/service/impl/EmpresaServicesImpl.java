@@ -4,12 +4,15 @@ import com.examen.ms_roque_sucari.clients.ClientSunat;
 import com.examen.ms_roque_sucari.constants.Constants;
 import com.examen.ms_roque_sucari.dao.EmpresaRepository;
 import com.examen.ms_roque_sucari.entity.EmpresaEntity;
+import com.examen.ms_roque_sucari.redis.RedisService;
 import com.examen.ms_roque_sucari.request.EmpresaRequest;
 import com.examen.ms_roque_sucari.response.ResponseBase;
 import com.examen.ms_roque_sucari.response.ResponseSunat;
 import com.examen.ms_roque_sucari.service.EmpresaService;
 
+import com.examen.ms_roque_sucari.util.Util;
 import lombok.RequiredArgsConstructor;
+import org.bouncycastle.asn1.x509.sigi.PersonalData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +24,7 @@ import java.util.Optional;
 public class EmpresaServicesImpl implements EmpresaService {
     private final EmpresaRepository empresaRepository;
     private final ClientSunat clientSunat;
-    //private final RedisService redisService;
+    private final RedisService redisService;
 
     //SunatService apiService = SunatCliente.getClient().create(SunatService.class);
     @Value("${token.api}")
@@ -36,6 +39,25 @@ public class EmpresaServicesImpl implements EmpresaService {
         }else{
             return new ResponseBase(Constants.CODIGO_ERROR, Constants.MENSAJE_ERROR, Optional.empty());
         }
+    }
+
+    @Override
+    public ResponseBase getEmpresa(String numeroDocumento) {
+        String redisInfo =redisService.getFromRedis(Constants.REDIS_KEY_GUARDAR+numeroDocumento);
+        if (redisInfo != null) {
+            EmpresaEntity empresa = Util.convertirDesdeString(redisInfo, EmpresaEntity.class);
+            return new ResponseBase(Constants.CODIGO_EXITO, Constants.MENSAJE_EXITO_DESDE_REDIS, Optional.of(empresa));
+        }else {
+            EmpresaEntity empresa = empresaRepository.findByNumeroDocumento(numeroDocumento);
+            String dataParaRedis = Util.convertirAString(empresa);
+            redisService.saveInRedis(Constants.REDIS_KEY_GUARDAR+numeroDocumento,dataParaRedis,2);
+            return new ResponseBase(Constants.CODIGO_EXITO, Constants.MENSAJE_EXITO_DESDE_BD, Optional.of(empresa));
+        }
+    }
+
+    @Override
+    public void deleteEmpresa(String numeroDocumento) {
+        redisService.deleteKey(Constants.REDIS_KEY_GUARDAR+numeroDocumento);
     }
 
     private ResponseSunat getExecutionSunat(String ruc){
