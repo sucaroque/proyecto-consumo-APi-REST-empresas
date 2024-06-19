@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -50,7 +51,7 @@ public class EmpresaServicesImpl implements EmpresaService {
         }else {
             EmpresaEntity empresa = empresaRepository.findByNumeroDocumento(numeroDocumento);
             String dataParaRedis = Util.convertirAString(empresa);
-            redisService.saveInRedis(Constants.REDIS_KEY_GUARDAR+numeroDocumento,dataParaRedis,2);
+            redisService.saveInRedis(Constants.REDIS_KEY_GUARDAR+numeroDocumento,dataParaRedis,10);
             return new ResponseBase(Constants.CODIGO_EXITO, Constants.MENSAJE_EXITO_DESDE_BD, Optional.of(empresa));
         }
     }
